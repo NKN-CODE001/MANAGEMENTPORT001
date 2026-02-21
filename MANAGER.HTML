@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NKN Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .sidebar-item.active { 
+            background-color: #2563eb; 
+            color: white; 
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.2); 
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300">
+            <div class="flex flex-col h-full p-6">
+                <div class="flex items-center space-x-3 mb-10">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center font-bold text-2xl shadow-lg text-white">N</div>
+                    <span class="text-xl font-bold tracking-tight">NKN Portal</span>
+                </div>
+
+                <nav class="flex-1 space-y-2">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all active">
+                        <i data-lucide="layout-dashboard"></i><span class="font-medium">Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('projects')" id="btn-projects" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                        <i data-lucide="briefcase"></i><span class="font-medium">Projects</span>
+                    </button>
+                    <button onclick="switchTab('team')" id="btn-team" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                        <i data-lucide="users"></i><span class="font-medium">Team</span>
+                    </button>
+                    <button onclick="switchTab('finances')" id="btn-finances" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                        <i data-lucide="dollar-sign"></i><span class="font-medium">Finances</span>
+                    </button>
+                </nav>
+
+                <div class="mt-auto pt-6 border-t border-slate-800">
+                    <button class="flex items-center space-x-3 text-slate-400 hover:text-white transition-colors w-full px-2">
+                        <i data-lucide="log-out"></i><span class="text-sm font-medium">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-slate-100 rounded-lg">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="relative hidden md:block">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4"></i>
+                        <input type="text" id="globalSearch" placeholder="Search system..." class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 w-64 transition-all">
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="avatar-stack" class="flex -space-x-2 mr-2"></div>
+                    <button class="p-2 text-slate-400 hover:text-blue-600 relative">
+                        <i data-lucide="bell"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h2 id="page-title" class="text-2xl font-bold text-slate-900">Dashboard</h2>
+                            <p class="text-sm text-slate-500">NKN Enterprise Resource Management</p>
+                        </div>
+                        <div id="action-buttons"></div>
+                    </div>
+
+                    <!-- Dashboard Tab -->
+                    <div id="tab-dashboard" class="tab-content active animate-fade-in">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="stats-grid"></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                                <h3 class="text-lg font-bold text-slate-900 mb-6">Project Progress</h3>
+                                <div id="project-progress-list" class="space-y-5"></div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                                <h3 class="text-lg font-bold text-slate-900 mb-6">Live Activity</h3>
+                                <div id="notification-list" class="space-y-4"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Projects Tab -->
+                    <div id="tab-projects" class="tab-content animate-fade-in">
+                        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+                                    <tr>
+                                        <th class="px-6 py-4">Project</th>
+                                        <th className="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Manager</th>
+                                        <th class="px-6 py-4 text-right">Budget</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="projects-table-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Team Tab -->
+                    <div id="tab-team" class="tab-content animate-fade-in">
+                        <div id="team-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </div>
+
+                    <!-- Finances Tab -->
+                    <div id="tab-finances" class="tab-content animate-fade-in">
+                        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Net Revenue</span>
+                                    <p id="net-revenue-text" class="text-2xl font-black"></p>
+                                </div>
+                            </div>
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50/50 text-slate-500 text-[10px] uppercase font-bold">
+                                    <tr>
+                                        <th class="px-6 py-4">Transaction</th>
+                                        <th class="px-6 py-4">Category</th>
+                                        <th class="px-6 py-4">Date</th>
+                                        <th class="px-6 py-4 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finances-table-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let projects = [
+            { id: 1, name: 'Brand Identity Refresh', status: 'In Progress', manager: 'Alex Rivera', budget: 12000, progress: 65 },
+            { id: 2, name: 'Q1 Financial Audit', status: 'Completed', manager: 'Sarah Chen', budget: 5000, progress: 100 },
+            { id: 3, name: 'Internal CRM Dev', status: 'Planning', manager: 'Jordan Smith', budget: 25000, progress: 15 }
+        ];
+
+        let team = [
+            { id: 1, name: 'Alex Rivera', role: 'Senior Designer', email: 'alex@nkn.com', availability: 'Busy' },
+            { id: 2, name: 'Sarah Chen', role: 'Financial Analyst', email: 'sarah@nkn.com', availability: 'Available' },
+            { id: 3, name: 'Jordan Smith', role: 'Full Stack Dev', email: 'jordan@nkn.com', availability: 'Available' }
+        ];
+
+        let finances = [
+            { id: 1, description: 'Software Subscription', category: 'IT', amount: -299, date: '2023-10-24' },
+            { id: 2, description: 'Client Payment - Project X', category: 'Revenue', amount: 4500, date: '2023-10-23' },
+            { id: 3, description: 'Office Rent', category: 'Facilities', amount: -1200, date: '2023-10-20' }
+        ];
+
+        let notifications = [
+            { id: 1, text: "New project 'Internal CRM' assigned", time: '2h ago' },
+            { id: 2, text: "Budget approved for Brand Refresh", time: '5h ago' }
+        ];
+
+        let currentTab = 'dashboard';
+
+        // --- Core Functions ---
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            // Update UI Sidebar
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`btn-${tabId}`).classList.add('active');
+            
+            // Update Visibility
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Update Header
+            document.getElementById('page-title').innerText = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+            
+            render();
+            if (window.innerWidth < 1024) toggleSidebar(false);
+        }
+
+        function toggleSidebar(force) {
+            const sidebar = document.getElementById('sidebar');
+            if (force === false) sidebar.classList.add('-translate-x-full');
+            else sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // --- CRUD Handlers ---
+
+        function addProject() {
+            const name = prompt("Project Name:");
+            if (!name) return;
+            projects.push({
+                id: Date.now(),
+                name,
+                status: 'Planning',
+                manager: 'Unassigned',
+                budget: 0,
+                progress: 0
+            });
+            log("Created project: " + name);
+            render();
+        }
+
+        function deleteProject(id) {
+            if (!confirm("Delete this project?")) return;
+            projects = projects.filter(p => p.id !== id);
+            log("Removed project.");
+            render();
+        }
+
+        function addMember() {
+            const name = prompt("Name:");
+            const role = prompt("Role:");
+            if (!name || !role) return;
+            team.push({
+                id: Date.now(),
+                name,
+                role,
+                email: name.toLowerCase().replace(' ', '.') + '@nkn.com',
+                availability: 'Available'
+            });
+            log(name + " joined the team.");
+            render();
+        }
+
+        function deleteMember(id) {
+            if (!confirm("Remove this member?")) return;
+            team = team.filter(m => m.id !== id);
+            log("Removed team member.");
+            render();
+        }
+
+        function addTransaction() {
+            const desc = prompt("Description:");
+            const val = parseFloat(prompt("Amount (negative for expense):"));
+            if (!desc || isNaN(val)) return;
+            finances.unshift({
+                id: Date.now(),
+                description: desc,
+                category: val > 0 ? 'Revenue' : 'Expense',
+                amount: val,
+                date: new Date().toISOString().split('T')[0]
+            });
+            log("Financial record added.");
+            render();
+        }
+
+        function log(text) {
+            notifications.unshift({ id: Date.now(), text, time: 'Just now' });
+            notifications = notifications.slice(0, 5);
+        }
+
+        // --- Rendering Logic ---
+
+        function render() {
+            const search = document.getElementById('globalSearch').value.toLowerCase();
+
+            // Stats
+            const revenue = finances.reduce((a, b) => a + b.amount, 0);
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = `
+                ${renderStatCard('Projects', projects.length, 'briefcase', 'text-blue-600', 'bg-blue-50')}
+                ${renderStatCard('Team', team.length, 'users', 'text-purple-600', 'bg-purple-50')}
+                ${renderStatCard('Balance', '$' + revenue.toLocaleString(), 'dollar-sign', 'text-emerald-600', 'bg-emerald-50')}
+                ${renderStatCard('Uptime', '99.9%', 'clock', 'text-amber-600', 'bg-amber-50')}
+            `;
+
+            // Action Buttons
+            const actions = document.getElementById('action-buttons');
+            if (currentTab === 'projects') actions.innerHTML = `<button onclick="addProject()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm">New Project</button>`;
+            else if (currentTab === 'team') actions.innerHTML = `<button onclick="addMember()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm">Add Member</button>`;
+            else if (currentTab === 'finances') actions.innerHTML = `<button onclick="addTransaction()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold text-sm">New Entry</button>`;
+            else actions.innerHTML = '';
+
+            // Projects Table
+            const pTable = document.getElementById('projects-table-body');
+            pTable.innerHTML = projects.filter(p => p.name.toLowerCase().includes(search)).map(p => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-6 py-4 font-semibold">${p.name}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${p.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">${p.status}</span></td>
+                    <td class="px-6 py-4 text-sm text-slate-500">${p.manager}</td>
+                    <td class="px-6 py-4 text-right font-mono">$${p.budget.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-right"><button onclick="deleteProject(${p.id})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                </tr>
+            `).join('');
+
+            // Team Grid
+            const tGrid = document.getElementById('team-grid');
+            tGrid.innerHTML = team.filter(m => m.name.toLowerCase().includes(search)).map(m => `
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm relative group">
+                    <button onclick="deleteMember(${m.id})" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 flex items-center justify-center rounded-full font-bold text-xl">${m.name[0]}</div>
+                        <div><h4 class="font-bold">${m.name}</h4><p class="text-xs text-slate-400">${m.role}</p></div>
+                    </div>
+                    <div class="text-xs text-slate-500 space-y-1">
+                        <div class="flex justify-between"><span>Email</span><span class="text-slate-900">${m.email}</span></div>
+                        <div class="flex justify-between"><span>Status</span><span class="text-green-500 font-bold">${m.availability}</span></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Finances
+            document.getElementById('net-revenue-text').innerText = '$' + revenue.toLocaleString();
+            document.getElementById('net-revenue-text').className = `text-2xl font-black ${revenue >= 0 ? 'text-emerald-600' : 'text-red-600'}`;
+            const fTable = document.getElementById('finances-table-body');
+            fTable.innerHTML = finances.map(f => `
+                <tr>
+                    <td class="px-6 py-4 text-sm font-medium">${f.description}</td>
+                    <td class="px-6 py-4 text-xs text-slate-400">${f.category}</td>
+                    <td class="px-6 py-4 text-xs text-slate-400">${f.date}</td>
+                    <td class="px-6 py-4 text-right font-bold ${f.amount > 0 ? 'text-emerald-600' : 'text-slate-900'}">${f.amount > 0 ? '+' : ''}$${f.amount.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            // Dashboard specifics
+            const progList = document.getElementById('project-progress-list');
+            progList.innerHTML = projects.slice(0, 3).map(p => `
+                <div>
+                    <div class="flex justify-between text-xs mb-1 font-bold"><span>${p.name}</span><span>${p.progress}%</span></div>
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-600 h-full" style="width: ${p.progress}%"></div></div>
+                </div>
+            `).join('');
+
+            const noteList = document.getElementById('notification-list');
+            noteList.innerHTML = notifications.map(n => `
+                <div class="border-l-2 border-blue-500 pl-4 py-1">
+                    <p class="text-sm text-slate-800">${n.text}</p>
+                    <p class="text-[10px] text-slate-400">${n.time}</p>
+                </div>
+            `).join('');
+
+            const stack = document.getElementById('avatar-stack');
+            stack.innerHTML = team.slice(0, 3).map(m => `
+                <div class="w-8 h-8 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">${m.name[0]}</div>
+            `).join('') + `<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">+${team.length}</div>`;
+
+            // Refresh Icons
+            lucide.createIcons();
+        }
+
+        function renderStatCard(label, val, icon, color, bg) {
+            return `
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                    <div class="p-2 w-10 h-10 ${bg} ${color} rounded-lg mb-4 flex items-center justify-center">
+                        <i data-lucide="${icon}"></i>
+                    </div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">${label}</p>
+                    <p class="text-2xl font-black text-slate-900">${val}</p>
+                </div>
+            `;
+        }
+
+        // Init
+        document.getElementById('globalSearch').addEventListener('input', render);
+        window.onload = render;
+    </script>
+</body>
+</html>
